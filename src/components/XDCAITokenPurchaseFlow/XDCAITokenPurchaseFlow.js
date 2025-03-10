@@ -114,33 +114,92 @@ const XDCAITokenPurchaseFlow = () => {
   const [provider, setProvider] = useState(null);
   const [balance, setBalance] = useState(null);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [walletType, setWalletType] = useState(null);
   const [isXdcNetwork, setIsXdcNetwork] = useState(false);
   const [connectionError, setConnectionError] = useState('');
   
-  // Check if metamask is installed
-  const checkIfWalletIsInstalled = () => {
-    return typeof window !== 'undefined' && typeof window.ethereum !== 'undefined';
+  // Check if specific wallets are installed
+  const checkIfWalletIsInstalled = (walletType) => {
+    if (typeof window === 'undefined') return false;
+    
+    switch(walletType) {
+      case 'metamask':
+        return typeof window.ethereum !== 'undefined' && (window.ethereum.isMetaMask || window.ethereum.providers?.some(p => p.isMetaMask));
+      case 'walletconnect':
+        // WalletConnect is a protocol, not an extension, so we always return true
+        return true;
+      case 'phantom':
+        return typeof window.phantom !== 'undefined' && typeof window.phantom?.solana !== 'undefined';
+      case 'coinbase':
+        return typeof window.ethereum !== 'undefined' && (window.ethereum.isCoinbaseWallet || window.ethereum.providers?.some(p => p.isCoinbaseWallet));
+      default:
+        return typeof window.ethereum !== 'undefined';
+    }
   };
 
   // Connect wallet handler
-  const connectWallet = async (walletType) => {
-    if (!checkIfWalletIsInstalled()) {
-      setConnectionError('Please install MetaMask to connect!');
+  const connectWallet = async (type) => {
+    if (!checkIfWalletIsInstalled(type)) {
+      setConnectionError(`Please install ${type} to connect!`);
       return;
     }
 
     try {
       setIsConnecting(true);
+      setWalletType(type);
       setConnectionError('');
       
-      // Ensure we prevent any default navigation behavior
-      // Request account access - this should trigger the MetaMask popup
-      const accounts = await window.ethereum.request({ 
-        method: 'eth_requestAccounts',
-      });
+      let accounts;
+      let ethersProvider;
       
-      // Create ethers provider
-      const ethersProvider = new ethers.providers.Web3Provider(window.ethereum);
+      switch(type) {
+        case 'metamask':
+          // Get Metamask provider if multiple providers exist
+          const provider = window.ethereum.providers
+            ? window.ethereum.providers.find(p => p.isMetaMask)
+            : window.ethereum;
+            
+          accounts = await provider.request({ method: 'eth_requestAccounts' });
+          ethersProvider = new ethers.providers.Web3Provider(provider);
+          break;
+          
+        case 'walletconnect':
+          // Open link for WalletConnect, since it's not an extension
+          window.open('https://explorer.walletconnect.com/?type=wallet', '_blank');
+          setConnectionError('Please scan a QR code with your mobile WalletConnect compatible wallet');
+          setIsConnecting(false);
+          return;
+          
+        case 'phantom':
+          try {
+            // Connect to Phantom
+            const phantomProvider = window.phantom?.solana;
+            const resp = await phantomProvider.connect();
+            accounts = [resp.publicKey.toString()];
+            setConnectionError('Phantom connected, but it uses Solana. Please use Metamask for ETH transactions.');
+            setIsConnecting(false);
+            return;
+          } catch (err) {
+            throw new Error('Failed to connect to Phantom: ' + err.message);
+          }
+          
+        case 'coinbase':
+          // Get Coinbase provider if multiple providers exist
+          const coinbaseProvider = window.ethereum.providers
+            ? window.ethereum.providers.find(p => p.isCoinbaseWallet)
+            : window.ethereum;
+            
+          accounts = await coinbaseProvider.request({ method: 'eth_requestAccounts' });
+          ethersProvider = new ethers.providers.Web3Provider(coinbaseProvider);
+          break;
+          
+        default:
+          throw new Error('Unsupported wallet type');
+      }
+      
+      if (!accounts || !ethersProvider) {
+        throw new Error('Failed to connect wallet');
+      }
       
       setAccount(accounts[0]);
       setProvider(ethersProvider);
@@ -160,7 +219,7 @@ const XDCAITokenPurchaseFlow = () => {
       console.error('Error connecting wallet:', error);
       // Check if user rejected the connection
       if (error.code === 4001) {
-        setConnectionError('Connection rejected. Please approve the MetaMask connection.');
+        setConnectionError('Connection rejected. Please approve the wallet connection.');
       } else {
         setConnectionError('Failed to connect wallet: ' + (error.message || 'Unknown error'));
       }
@@ -285,10 +344,10 @@ const XDCAITokenPurchaseFlow = () => {
         </div>
         
         <div className="help-links">
-          <a href="https://www.google.com" className="info-link">
+          <a href="#" className="info-link">
             <span className="info-icon">ℹ️</span> How to Buy
           </a>
-          <a href="https://www.google.com" className="help-link">
+          <a href="#" className="help-link">
             <span className="question-icon">❓</span> Help, My Wallet Won't Connect!
           </a>
         </div>
@@ -303,9 +362,9 @@ const XDCAITokenPurchaseFlow = () => {
       <div className="instruction">
         If you already have a wallet, select it from the options below.
         <br />
-        {!checkIfWalletIsInstalled() && (
+        {!checkIfWalletIsInstalled('metamask') && !checkIfWalletIsInstalled('coinbase') && (
           <div className="install-message">
-            You need to install <a href="https://metamask.io/download/" target="_blank" rel="noopener noreferrer" className="link">Metamask</a> to connect.
+            You need to install <a href="https://metamask.io/download/" target="_blank" rel="noopener noreferrer" className="link">Metamask</a> or another wallet to connect.
           </div>
         )}
       </div>
@@ -319,45 +378,34 @@ const XDCAITokenPurchaseFlow = () => {
       <div className="wallet-options">
         <button 
           className="wallet-option" 
-          onClick={(e) => {
-            e.preventDefault();
-            connectWallet('metamask');
-          }} 
+          onClick={() => connectWallet('metamask')} 
           disabled={isConnecting}
         >
-          <span>Metamask {isConnecting && '(connecting...)'}</span> <MetamaskIcon />
+          <span>Metamask {isConnecting && walletType === 'metamask' && '(connecting...)'}</span> <MetamaskIcon />
         </button>
         
         <button 
           className="wallet-option" 
-          onClick={(e) => {
-            e.preventDefault();
-            alert('WalletConnect integration coming soon!');
-          }} 
+          onClick={() => connectWallet('walletconnect')} 
           disabled={isConnecting}
         >
-          <span>WalletConnect</span> <WalletConnectIcon />
+          <span>WalletConnect {isConnecting && walletType === 'walletconnect' && '(connecting...)'}</span> <WalletConnectIcon />
         </button>
         
         <button 
           className="wallet-option" 
-          onClick={(e) => {
-            e.preventDefault();
-            alert('Phantom integration coming soon!');
-          }} 
+          onClick={() => connectWallet('phantom')} 
           disabled={isConnecting}
         >
-          <span>Phantom</span> <PhantomIcon />
+          <span>Phantom {isConnecting && walletType === 'phantom' && '(connecting...)'}</span> <PhantomIcon />
         </button>
         
         <button 
           className="wallet-option" 
-          onClick={(e) => {
-            e.preventDefault();
-            alert('Coinbase Wallet integration coming soon!');
-          }} 
+          onClick={() => connectWallet('coinbase')} 
           disabled={isConnecting}
         >
+        
           <span>Coinbase Wallet</span> <CoinbaseIcon />
         </button>
       </div>
@@ -365,10 +413,7 @@ const XDCAITokenPurchaseFlow = () => {
       <button 
         className="btn secondary-btn" 
         style={{ marginTop: '20px' }} 
-        onClick={(e) => {
-          e.preventDefault();
-          setCurrentScreen(1);
-        }}
+        onClick={() => setCurrentScreen(1)}
       >
         Back
       </button>
