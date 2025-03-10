@@ -344,10 +344,10 @@ const XDCAITokenPurchaseFlow = () => {
         </div>
         
         <div className="help-links">
-          <a href="#" className="info-link">
+          <a href="https://www.google.com" className="info-link">
             <span className="info-icon">ℹ️</span> How to Buy
           </a>
-          <a href="#" className="help-link">
+          <a href="https://www.google.com" className="help-link">
             <span className="question-icon">❓</span> Help, My Wallet Won't Connect!
           </a>
         </div>
