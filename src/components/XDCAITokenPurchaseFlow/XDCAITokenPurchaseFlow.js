@@ -133,8 +133,11 @@ const XDCAITokenPurchaseFlow = () => {
       setIsConnecting(true);
       setConnectionError('');
       
-      // Request account access
-      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+      // Ensure we prevent any default navigation behavior
+      // Request account access - this should trigger the MetaMask popup
+      const accounts = await window.ethereum.request({ 
+        method: 'eth_requestAccounts',
+      });
       
       // Create ethers provider
       const ethersProvider = new ethers.providers.Web3Provider(window.ethereum);
@@ -155,7 +158,12 @@ const XDCAITokenPurchaseFlow = () => {
       setCurrentScreen(3);
     } catch (error) {
       console.error('Error connecting wallet:', error);
-      setConnectionError('Failed to connect wallet: ' + (error.message || 'Unknown error'));
+      // Check if user rejected the connection
+      if (error.code === 4001) {
+        setConnectionError('Connection rejected. Please approve the MetaMask connection.');
+      } else {
+        setConnectionError('Failed to connect wallet: ' + (error.message || 'Unknown error'));
+      }
     } finally {
       setIsConnecting(false);
     }
@@ -277,10 +285,10 @@ const XDCAITokenPurchaseFlow = () => {
         </div>
         
         <div className="help-links">
-          <a href="#" className="info-link">
+          <a href="https://www.google.com" className="info-link">
             <span className="info-icon">ℹ️</span> How to Buy
           </a>
-          <a href="#" className="help-link">
+          <a href="https://www.google.com" className="help-link">
             <span className="question-icon">❓</span> Help, My Wallet Won't Connect!
           </a>
         </div>
@@ -295,7 +303,11 @@ const XDCAITokenPurchaseFlow = () => {
       <div className="instruction">
         If you already have a wallet, select it from the options below.
         <br />
-        If you don't have a wallet, install <a href="https://metamask.io/download/" target="_blank" rel="noopener noreferrer" className="link">Metamask</a> to get started.
+        {!checkIfWalletIsInstalled() && (
+          <div className="install-message">
+            You need to install <a href="https://metamask.io/download/" target="_blank" rel="noopener noreferrer" className="link">Metamask</a> to connect.
+          </div>
+        )}
       </div>
       
       {connectionError && (
@@ -307,26 +319,57 @@ const XDCAITokenPurchaseFlow = () => {
       <div className="wallet-options">
         <button 
           className="wallet-option" 
-          onClick={() => connectWallet('metamask')} 
+          onClick={(e) => {
+            e.preventDefault();
+            connectWallet('metamask');
+          }} 
           disabled={isConnecting}
         >
           <span>Metamask {isConnecting && '(connecting...)'}</span> <MetamaskIcon />
         </button>
         
-        <button className="wallet-option" onClick={() => alert('WalletConnect integration coming soon!')} disabled={isConnecting}>
+        <button 
+          className="wallet-option" 
+          onClick={(e) => {
+            e.preventDefault();
+            alert('WalletConnect integration coming soon!');
+          }} 
+          disabled={isConnecting}
+        >
           <span>WalletConnect</span> <WalletConnectIcon />
         </button>
         
-        <button className="wallet-option" onClick={() => alert('Phantom integration coming soon!')} disabled={isConnecting}>
+        <button 
+          className="wallet-option" 
+          onClick={(e) => {
+            e.preventDefault();
+            alert('Phantom integration coming soon!');
+          }} 
+          disabled={isConnecting}
+        >
           <span>Phantom</span> <PhantomIcon />
         </button>
         
-        <button className="wallet-option" onClick={() => alert('Coinbase Wallet integration coming soon!')} disabled={isConnecting}>
+        <button 
+          className="wallet-option" 
+          onClick={(e) => {
+            e.preventDefault();
+            alert('Coinbase Wallet integration coming soon!');
+          }} 
+          disabled={isConnecting}
+        >
           <span>Coinbase Wallet</span> <CoinbaseIcon />
         </button>
       </div>
       
-      <button className="btn secondary-btn" style={{ marginTop: '20px' }} onClick={() => setCurrentScreen(1)}>
+      <button 
+        className="btn secondary-btn" 
+        style={{ marginTop: '20px' }} 
+        onClick={(e) => {
+          e.preventDefault();
+          setCurrentScreen(1);
+        }}
+      >
         Back
       </button>
     </div>
