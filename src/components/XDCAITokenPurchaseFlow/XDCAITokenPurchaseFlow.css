@@ -398,6 +398,161 @@ h2 {
   font-weight: bold;
 }
 
+/* WalletConnect Modal Styles */
+.wallet-connect-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.75);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.wallet-connect-modal {
+  background-color: #0f0f0f;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 400px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+}
+
+.wallet-connect-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  border-bottom: 1px solid #1a1a1a;
+}
+
+.wallet-connect-modal-header h3 {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+  color: #fff;
+}
+
+.close-button {
+  background: none;
+  border: none;
+  color: #b0b0b0;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+.wallet-connect-tabs {
+  display: flex;
+  border-bottom: 1px solid #1a1a1a;
+}
+
+.wallet-connect-tab {
+  flex: 1;
+  background: none;
+  border: none;
+  color: #b0b0b0;
+  padding: 12px;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.wallet-connect-tab.active {
+  color: #3B99FC;
+  border-bottom: 2px solid #3B99FC;
+}
+
+.tab-icon {
+  font-size: 16px;
+}
+
+.wallet-connect-qr-container {
+  padding: 24px;
+  display: flex;
+  justify-content: center;
+}
+
+.wallet-connect-qr {
+  background-color: white;
+  padding: 16px;
+  border-radius: 12px;
+  position: relative;
+  width: 280px;
+  height: 280px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.qr-code-image {
+  width: 100%;
+  height: 100%;
+}
+
+.qr-logo {
+  position: absolute;
+  background-color: white;
+  width: 60px;
+  height: 60px;
+  border-radius: 12px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.qr-logo .wallet-connect-icon svg {
+  width: 40px;
+  height: 40px;
+}
+
+.wallet-connect-footer {
+  padding: 16px;
+  border-top: 1px solid #1a1a1a;
+}
+
+.wallet-options-small {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+}
+
+.wallet-option-small {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.wallet-option-small img {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+}
+
+.wallet-option-small span {
+  font-size: 12px;
+  color: #b0b0b0;
+}
+
+/* Wallet Connect Icon CSS Overrides for Modal */
+.wallet-connect-modal-header .wallet-connect-icon svg {
+  width: 28px;
+  height: 28px;
+}
+
 /* Responsive adjustments */
 @media (max-width: 600px) {
   .xdcai-token-purchase-flow {
